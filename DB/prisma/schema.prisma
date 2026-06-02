@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       Int             @id @default(autoincrement())
+  name     String
+  email    String
+  password String
+  zaps     Zap[]
+  oAuth    oauth_accounts?
+}
+
+model oauth_accounts {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  provider          Provider
+  providerAccountId String   @db.VarChar(255)
+  accessToken       String
+  accessTokenIv     String?
+  refreshToken      String
+  refreshTokenIv    String?
+  expiresAt         DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Zap {
+  id      String   @id @default(uuid())
+  userId  Int
+  actions Action[]
+  trigger Trigger?
+  user    User     @relation(fields: [userId], references: [id])
+  zapRuns ZapRun[]
+}
+
+model Trigger {
+  id              String            @id @default(uuid())
+  zapId           String            @unique
+  availTriggerId  String
+  triggerMetadata Json?
+  type            AvailiableTrigger @relation(fields: [availTriggerId], references: [id])
+  zap             Zap               @relation(fields: [zapId], references: [id])
+}
+
+model AvailiableTrigger {
+  id       String    @id @default(uuid())
+  name     String
+  image    String    @default("")
+  triggers Trigger[]
+}
+
+model Action {
+  id             String           @id @default(uuid())
+  zapId          String
+  availActionId  String
+  actionMetadata Json?
+  sortingOrder   Int              @default(0)
+  type           AvailiableAction @relation(fields: [availActionId], references: [id])
+  zap            Zap              @relation(fields: [zapId], references: [id])
+}
+
+model AvailiableAction {
+  id      String   @id @default(uuid())
+  name    String
+  image   String   @default("")
+  actions Action[]
+}
+
+model ZapRun {
+  id           String        @id @default(uuid())
+  zapId        String
+  matadata     Json
+  zap          Zap           @relation(fields: [zapId], references: [id])
+  zapRunOutbox ZapRunOutbox?
+}
+
+model ZapRunOutbox {
+  id       String @id @default(uuid())
+  zapRunId String @unique
+  zapRun   ZapRun @relation(fields: [zapRunId], references: [id])
+}
+
+enum Provider {
+  google
+  github
+}
