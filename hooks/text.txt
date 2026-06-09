@@ -1,0 +1,29 @@
+npm init -y => to create  package.json
+npx tsc --init  => to create tsconfig.json
+
+npm i express @types/express
+
+=> create src => index.ts => write basic server code (import express n all)
+
+npm i prisma  => to install prisma
+npx prisma init  => to create schema.prisma  // we will define our schema here
+
+define schema in schema.prisma
+
+npm i @prisma/client @prisma/adapter-pg pg @types/pg
+
+create a lib folder under src 
+    under that create index.ts
+    paste some code from quickstart guide prisma
+     this all setup will let us import prisma wherever we want
+
+// these two things we have to do every time we update schema
+npx prisma migrate dev --name xyz
+npx prisma generate 
+
+// for above first start the docker postgres container 
+
+written some code of hooks to put tracks of zap run in transaction outbox pattern way
+
+*****************************
+
