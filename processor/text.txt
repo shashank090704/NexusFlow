@@ -1,0 +1,31 @@
+// run a kafka image over docker using 
+    docker run -p 9092:9092 apache/kafka:3.7.1
+//get inside the container
+    docker ps
+    docker exec -it container_id /bin/bash
+    cd /opt/kafka/bin
+// create a topic == queue using ssh/shell commands cause they are predefined scripts  and we use them only cause it is a single time process
+    run below command over teminal changing topic name
+    ./kafka-topics.sh --create --topic quickstart-events --bootstrap-server localhost:9092
+
+// after we can publish or consume using commands also or node js so we will be using node js
+
+npm i kafkajs 
+
+paste below code inside src/index.ts
+    import { Kafka } from "kafkajs";
+
+    const kafka = new Kafka({
+        clientId: "my-app",
+        brokers: ["localhost:9092"]
+    })
+
+// now make procuder take help  from porject.100x.docs
+
+we will be fetching from the zaprunoutbox
+pushing to the queue using producer
+clearing zaprunoutbox
+
+
+
+
