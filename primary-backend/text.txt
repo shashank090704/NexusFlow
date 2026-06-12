@@ -1,0 +1,9 @@
+// crete index.ts => import express,cors
+// for routing create router => import Router for this
+//then middleware 
+// import zod to do all the types checking
+//create types folder to do all the type checking using zod
+
+// created user routes like sign in , sign up, get user  -> used jwt -> used middleware
+// created zap routes -> to create zap -> writtern some interesting prisma queries
+// by above i learned to write prisma queries
