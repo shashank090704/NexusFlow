@@ -1,0 +1,11 @@
+# Ignore all node_modules in any folder
+**/node_modules
+# Ignore build artifacts
+**/.next
+**/dist
+**/build
+**/out
+# Ignore git and logs
+.git
+*.log
+**/.cache

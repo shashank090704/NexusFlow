@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-zapier}
+    ports:
+      - "5432:5432"
+    volumes:
+      - zapier_volume:/var/lib/postgresql/data
+    networks:
+      - flow-network
+    
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - flow-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+    - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # This allows internal containers to talk on 9092
+      #this all thing to make kafka connect with locally as well as docker 
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - flow-network
+
+  primary-backend:
+    build:
+      context: .
+      dockerfile: primary-backend/Dockerfile
+    env_file:
+      - ./.env
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_PASSWORD: ${JWT_PASSWORD}
+      FRONTEND_URL: ${FRONTEND_URL}
+      NODE_ENV: ${NODE_ENV} # Fixed typo
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+    depends_on:
+      - db
+    networks:
+      - flow-network
+
+  hooks:
+    build:
+      context: .
+      dockerfile: hooks/Dockerfile
+    ports:
+      - "3001:3001" 
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+    depends_on:
+      - db
+      - kafka
+    networks:
+      - flow-network
+
+  processor:
+    build:
+      context: .
+      dockerfile: processor/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+    depends_on:
+      - db
+      - kafka
+    networks:
+      - flow-network
+
+  consumer:
+    build:
+      context: .
+      dockerfile: consumer/Dockerfile
+    restart: on-failure # This keeps the service trying until Kafka is ready
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+    depends_on:
+      - db
+      - kafka
+    networks:
+      - flow-network
+
+  zapier-frontend:
+    build:
+      context: .
+      dockerfile: zapier-frontend/Dockerfile
+      args:
+        # Crucial: Next.js needs this DURING the build env are for runtime
+        #nextjs needs this because it compiles your code into static files for the browser.
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+    ports:
+      - "3000:3000" 
+    networks:
+      - flow-network
+
+networks:
+  flow-network:
+    driver: bridge
+
+volumes:
+  zapier_volume:
+   

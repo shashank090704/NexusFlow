@@ -1,0 +1,1 @@
+better to read the index.ts itself i ahve defined everything there

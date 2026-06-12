@@ -1,0 +1,31 @@
+//to run 
+tsc -b
+node dist/index.js
+
+1st read hooks text.txt
+
+we have to make processor bu than we have to copy prisma schema migration and all to this folder 
+
+so we shifted to monorepo architecture 
+we have created single folder maintaining DB
+a root folder projectzapier has ita own package.json and tsconfig 
+
+we have to add some things in each folder and root package.json file 
+
+in db tsconfig 
+    "composite" : true,
+
+in hooks tsconfig and every that uses db
+    "references": [
+        { "path": "../DB" }
+    ]
+
+in hooks package.json and every that uses db
+    "dependencies": {
+        "db": "*"
+    }
+
+
+read processor.txt 
+
+read consumer.txt
